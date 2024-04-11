@@ -34,15 +34,6 @@ ALLOWED_HOSTS = ['*']
 # Application definition
 AUTH_USER_MODEL = "user.User"
 
-ADMIN_ORDERING = (
-    ('user', (
-        'User',
-    )),
-    ('auth', (
-        'Group',
-    )),
-)
-
 
 INSTALLED_APPS = [
     'django.contrib.admin',
