@@ -1,0 +1,100 @@
+version: "2.4"
+
+x-logging: &default-logging
+  logging:
+    options:
+      max-size: '50m'
+      max-file: '5'
+    driver: json-file
+
+x-backend-app-db-vars: &backend-app-db-vars
+  POSTGRES_HOST: "backend-app-db"
+  POSTGRES_DB: "postgres"
+  POSTGRES_USER: "postgres"
+  POSTGRES_PASSWORD: "D59xmVHz"
+  PGDATA: "/var/lib/postgresql/data/"
+
+x-backend-app-vars: &backend-app-vars
+  <<: *backend-app-db-vars
+  DJANGO_SETTINGS_MODULE: "server.core.settings.base"
+  DEBUG: "1"
+  SECRET_KEY: "er)e+o@ma9v)^1k$zymd&)nu7sfyz5ks*ui(9mv2eo9^wj^rqr"
+  SERVER_NAME: "${SERVER_NAME}"
+  SERVER_PROTOCOL: "http"
+  REDIS_HOST: "backend-app-redis"
+
+services:
+  backend-app-db:
+    image: postgres:14.1-alpine
+    <<: *default-logging
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "${POSTGRES_USER:-postgres}" ]
+      interval: 5s
+      retries: 5
+    ports:
+      - "5432:5432"
+    volumes:
+      - "backend-app-db:/var/lib/postgresql/data"
+    environment: *backend-app-db-vars
+
+  backend-app-redis:
+    image: redis:alpine
+    <<: *default-logging
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 30s
+      retries: 50
+    volumes:
+      - "backend-app-redis:/data/"
+
+  backend-app:
+    build:
+      context: ./app
+    <<: *default-logging
+    depends_on:
+      backend-app-db:
+        condition: service_healthy
+      backend-app-redis:
+        condition: service_healthy
+    volumes:
+      - "./app:/srv/app/"
+      - "backend-app-static:/srv/static/"
+      - "backend-app-media:/srv/media/"
+    environment: *backend-app-vars
+    command: >
+      uwsgi
+        --socket 0.0.0.0:8000
+        --master --processes=1 --threads=2
+        --worker-reload-mercy=1
+        --max-fd=1024
+        --wsgi server.core.wsgi
+        --enable-threads --single-interpreter
+        --harakiri=75
+        --reload-on-rss=256
+        --max-requests=100
+        --vacuum
+        --python-autoreload=1
+
+  backend-nginx:
+    build:
+      context: ./nginx
+    <<: *default-logging
+    depends_on:
+      - "backend-app"
+    volumes:
+      - "backend-app-static:/srv/static/"
+      - "backend-app-media:/srv/media/"
+    ports:
+      - "80:80"
+    environment:
+      SERVER_NAME: "${SERVER_NAME}"
+      SERVER_HOST: "backend-app"
+      SERVER_PORT: "8000"
+
+
+volumes:
+  backend-app-db:
+  backend-app-redis:
+  backend-app-static:
+  backend-app-media:

@@ -1,0 +1,39 @@
+server {
+    listen 80;
+    server_name ${SERVER_NAME};
+    client_max_body_size 15M;
+    keepalive_timeout 5;
+
+    add_header Strict-Transport-Security "max-age=31536000" always;
+
+    gzip on;
+    gzip_static on;
+    gzip_disable "msie6";
+    gzip_proxied any;
+    gzip_comp_level 6;
+    gzip_min_length 0;
+    gzip_vary on;
+    gzip_types text/plain text/css application/json application/x-javascript text/xml application/xml application/xml+rss text/javascript application/vnd.ms-fontobject application/x-font-ttf font/opentype;
+
+    location /static/ {
+        alias /srv/static/;
+        expires 30d;
+    }
+
+    location /media/ {
+        alias /srv/media/;
+        expires 30d;
+    }
+
+    location / {
+        include uwsgi_params;
+        resolver 127.0.0.11 valid=30s;
+        set $server_endpoint "${SERVER_HOST}:${SERVER_PORT}";
+        uwsgi_pass $server_endpoint;
+    }
+
+    location = /50x.html {
+        root /usr/share/nginx/html;
+    }
+    error_page   500 502 503 504  /50x.html;
+}
