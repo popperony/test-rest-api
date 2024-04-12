@@ -29,6 +29,10 @@ SECRET_KEY = os.environ.get('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+
+# Color API
+COLORAPI_URL = 'https://www.thecolorapi.com/id'
+
 ALLOWED_HOSTS = ['*']
 
 # Application definition
@@ -49,6 +53,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     'django_filters',
     'django_extensions',
+    'server.apps.palette',
 ]
 
 MIDDLEWARE = [

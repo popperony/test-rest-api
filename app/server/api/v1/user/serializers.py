@@ -7,7 +7,6 @@ from server.api.v1.utils import validate_password
 User = get_user_model()
 
 
-
 class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -25,9 +24,6 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class TokenObtainPairResponseSerializer(serializers.Serializer):
-    """
-        Переопределенный сериализатор для корректного отображения в сваггере
-    """
     access = serializers.CharField()
     refresh = serializers.CharField()
 
@@ -48,17 +44,13 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         extra_kwargs = {'password': {'write_only': True}, 'id': {'read_only': True}}
 
     def create(self, validated_data):
-        """
-        Создание пользователя при регистрации
-        :param validated_data:
-        :return:
-        """
-        check_user = User.objects.filter(email=validated_data['login']).first()
+        check_user = User.objects.filter(login=validated_data['login']).first()
         if check_user:
             raise ValidationError(detail={'error': 'Такой пользователь уже существует'})
 
         user = User.objects.create_user(
             login=validated_data['login'],
+            name=validated_data['name'],
             password=validate_password(validated_data['password'])
         )
         return user

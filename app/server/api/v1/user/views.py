@@ -16,34 +16,17 @@ from server.apps.user.models import User
 
 
 class UserViewSets(viewsets.ModelViewSet):
-    queryset = User.objects.none()
+    queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = (IsAuthenticated,)
     pagination_class = None
-    http_method_names = ['get', 'post', 'put', 'patch']
+    http_method_names = ['get']
 
-
-    @swagger_auto_schema(
-        operation_description="Получение профиля пользователя",
-        responses={
-            200: UserSerializer,
-        },
-    )
-    def list(self, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
-        serializer = self.get_serializer(queryset.first())
-        return Response(serializer.data)
-
-    def retrieve(self, request, *args, **kwargs):
-        instance = request.user
-        serializer = self.get_serializer(instance)
-        return Response(serializer.data)
+    def get_queryset(self):
+        return self.queryset.filter(id=self.request.user.id)
 
 
 class DecoratedTokenObtainPairView(TokenObtainPairView):
-    """
-    Переопределенный view для корректного отображения в сваггере
-    """
     # noinspection PyTypeChecker
     @swagger_auto_schema(
         responses={
@@ -61,11 +44,12 @@ class UserCreateViewSet(CreateModelMixin, viewsets.GenericViewSet):
 
     @swagger_auto_schema(responses={
         '201': openapi.Response(
-            description='',
+            description='Пользователь успешно зарегистрирован',
             examples={
                 'application/json': {
                         "id": 0,
-                        "email": "user@example.com"
+                        "login": "userlogin",
+                        "name": "username",
                     }
                 }
             )
@@ -73,6 +57,3 @@ class UserCreateViewSet(CreateModelMixin, viewsets.GenericViewSet):
     )
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
-
-    def perform_create(self, serializer):
-        instance = serializer.save()
