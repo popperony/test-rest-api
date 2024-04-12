@@ -18,7 +18,7 @@ x-backend-app-vars: &backend-app-vars
   <<: *backend-app-db-vars
   DJANGO_SETTINGS_MODULE: "server.core.settings.base"
   DEBUG: "1"
-  SECRET_KEY: "er)e+o@ma9v)^1k$zymd&)nu7sfyz5ks*ui(9mv2eo9^wj^rqr"
+  SECRET_KEY: "${SECRET_KEY}"
   SERVER_NAME: "${SERVER_NAME}"
   SERVER_PROTOCOL: "http"
   REDIS_HOST: "backend-app-redis"
