@@ -1,5 +1,4 @@
 from rest_framework import viewsets, status
-from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -22,7 +21,7 @@ class PaletteViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return self.queryset.filter(user=self.request.user)
+        return self.queryset.filter(user=self.request.user, is_visible=True)
 
 
 class ColorViewSet(viewsets.ModelViewSet):
@@ -46,7 +45,7 @@ class ColorsFromPaletteAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, palette_id):
-        if palette := Palette.objects.filter(id=palette_id, user=request.user).first():
+        if palette := Palette.objects.filter(id=palette_id, user=request.user, is_visible=True).first():
             colors = palette.color_set.all()
             serializer = ColorSerializer(colors, many=True)
             return Response(serializer.data)
